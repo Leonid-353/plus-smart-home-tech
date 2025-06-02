@@ -5,22 +5,22 @@ on:
     inputs:
       verbose_mode:
         description: "Включить подробные логи во время тестов"
-        required: false
+        required: true
         default: false
         type: boolean
       print_logs:
         description: "Включить вывод логов в консоль"
-        required: false
+        required: true
         default: false
         type: boolean
   pull_request:
     inputs:
       verbose_mode:
-        required: false
+        required: true
         type: string
         default: "false"
       print_logs:
-        required: false
+        required: true
         type: string
         default: "false"
 

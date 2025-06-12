@@ -1,39 +1,44 @@
 package ru.yandex.practicum.telemetry.collector.service.handler.sensor;
 
+import com.google.protobuf.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.telemetry.collector.configuration.KafkaConfig;
-import ru.yandex.practicum.telemetry.collector.model.sensor.SensorEvent;
 import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
 import ru.yandex.practicum.telemetry.collector.service.handler.SensorEventHandler;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class BaseSensorEventHandler<T extends SpecificRecordBase> implements SensorEventHandler {
+public abstract class BaseSensorEventHandler<T extends Message> implements SensorEventHandler {
     protected final KafkaEventProducer producer;
 
-    protected abstract T mapToAvro(SensorEvent event);
+    protected abstract T mapToProto(SensorEventProto event);
+
+    protected abstract void setPayload(SensorEventProto.Builder builder, T payload);
 
     @Override
-    public void handle(SensorEvent event) {
-        if (!event.getType().equals(getMessageType())) {
-            throw new IllegalArgumentException("Неизвестный тип события: " + event.getType());
+    public void handle(SensorEventProto event) {
+        if (!event.getPayloadCase().equals(getMessageType())) {
+            throw new IllegalArgumentException(
+                    String.format("Неизвестный тип события: %s", event.getPayloadCase().name())
+            );
         }
 
-        T payload = mapToAvro(event);
-        SensorEventAvro eventAvro = SensorEventAvro.newBuilder()
+        T payload = mapToProto(event);
+        SensorEventProto.Builder eventBuilder = SensorEventProto.newBuilder()
                 .setHubId(event.getHubId())
                 .setId(event.getId())
-                .setTimestamp(event.getTimestamp())
-                .setPayload(payload)
-                .build();
+                .setTimestamp(event.getTimestamp());
+
+        setPayload(eventBuilder, payload);
+
+        SensorEventProto eventProto = eventBuilder.build();
 
         producer.send(
                 KafkaConfig.TopicType.SENSORS_EVENTS,
-                eventAvro.getId(),
-                eventAvro
+                eventProto.getId(),
+                eventProto
         );
     }
 }

@@ -1,30 +1,33 @@
 package ru.yandex.practicum.telemetry.collector.service.handler.sensor;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
-import ru.yandex.practicum.telemetry.collector.model.sensor.SensorEvent;
-import ru.yandex.practicum.telemetry.collector.model.sensor.SensorEventType;
-import ru.yandex.practicum.telemetry.collector.model.sensor.TemperatureSensorEvent;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.TemperatureSensorProto;
 import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
 
 @Component
-public class TemperatureSensorEventHandler extends BaseSensorEventHandler<TemperatureSensorAvro> {
+public class TemperatureSensorEventHandler extends BaseSensorEventHandler<TemperatureSensorProto> {
     public TemperatureSensorEventHandler(KafkaEventProducer producer) {
         super(producer);
     }
 
     @Override
-    public SensorEventType getMessageType() {
-        return SensorEventType.TEMPERATURE_SENSOR_EVENT;
+    public SensorEventProto.PayloadCase getMessageType() {
+        return SensorEventProto.PayloadCase.TEMPERATURE_SENSOR;
     }
 
     @Override
-    protected TemperatureSensorAvro mapToAvro(SensorEvent event) {
-        TemperatureSensorEvent temperatureEvent = (TemperatureSensorEvent) event;
+    protected TemperatureSensorProto mapToProto(SensorEventProto event) {
+        TemperatureSensorProto temperatureEvent = event.getTemperatureSensor();
 
-        return TemperatureSensorAvro.newBuilder()
+        return TemperatureSensorProto.newBuilder()
                 .setTemperatureC(temperatureEvent.getTemperatureC())
                 .setTemperatureF(temperatureEvent.getTemperatureF())
                 .build();
+    }
+
+    @Override
+    protected void setPayload(SensorEventProto.Builder builder, TemperatureSensorProto payload) {
+        builder.setTemperatureSensor(payload);
     }
 }

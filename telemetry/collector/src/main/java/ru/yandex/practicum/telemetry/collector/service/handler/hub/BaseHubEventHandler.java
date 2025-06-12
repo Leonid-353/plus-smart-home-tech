@@ -1,38 +1,43 @@
 package ru.yandex.practicum.telemetry.collector.service.handler.hub;
 
+import com.google.protobuf.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.telemetry.collector.configuration.KafkaConfig;
-import ru.yandex.practicum.telemetry.collector.model.hub.HubEvent;
 import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
 import ru.yandex.practicum.telemetry.collector.service.handler.HubEventHandler;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class BaseHubEventHandler<T extends SpecificRecordBase> implements HubEventHandler {
+public abstract class BaseHubEventHandler<T extends Message> implements HubEventHandler {
     protected final KafkaEventProducer producer;
 
-    protected abstract T mapToAvro(HubEvent event);
+    protected abstract T mapToProto(HubEventProto event);
+
+    protected abstract void setPayload(HubEventProto.Builder builder, T payload);
 
     @Override
-    public void handle(HubEvent event) {
-        if (!event.getType().equals(getMessageType())) {
-            throw new IllegalArgumentException("Неизвестный тип события: " + event.getType());
+    public void handle(HubEventProto event) {
+        if (!event.getPayloadCase().equals(getMessageType())) {
+            throw new IllegalArgumentException(
+                    String.format("Неизвестный тип события: %s", event.getPayloadCase().name())
+            );
         }
 
-        T payload = mapToAvro(event);
-        HubEventAvro eventAvro = HubEventAvro.newBuilder()
+        T payload = mapToProto(event);
+        HubEventProto.Builder eventBuilder = HubEventProto.newBuilder()
                 .setHubId(event.getHubId())
-                .setTimestamp(event.getTimestamp())
-                .setPayload(payload)
-                .build();
+                .setTimestamp(event.getTimestamp());
+
+        setPayload(eventBuilder, payload);
+
+        HubEventProto eventProto = eventBuilder.build();
 
         producer.send(
                 KafkaConfig.TopicType.HUBS_EVENTS,
-                eventAvro.getHubId(),
-                eventAvro
+                eventProto.getHubId(),
+                eventProto
         );
     }
 }

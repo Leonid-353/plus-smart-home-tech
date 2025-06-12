@@ -1,8 +1,8 @@
 package ru.yandex.practicum.telemetry.collector.service;
 
+import com.google.protobuf.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import java.time.Duration;
 @Component
 @RequiredArgsConstructor
 public class KafkaEventProducer {
-    private final KafkaProducer<String, SpecificRecordBase> producer;
+    private final KafkaProducer<String, byte[]> producer;
     private final KafkaConfig kafkaConfig;
 
     @Autowired
@@ -24,12 +24,12 @@ public class KafkaEventProducer {
         this.producer = new KafkaProducer<>(kafkaConfig.getProducer().getProperties());
     }
 
-    public void send(KafkaConfig.TopicType topicType, String key, SpecificRecordBase message) {
+    public void send(KafkaConfig.TopicType topicType, String key, Message message) {
         String topicName = kafkaConfig.getProducer().getTopics().get(topicType);
         if (topicName == null || topicName.isEmpty()) {
             throw new RuntimeException("Нет такого топика: " + topicType);
         }
-        producer.send(new ProducerRecord<>(topicName, key, message));
+        producer.send(new ProducerRecord<>(topicName, key, message.toByteArray()));
         producer.flush();
     }
 

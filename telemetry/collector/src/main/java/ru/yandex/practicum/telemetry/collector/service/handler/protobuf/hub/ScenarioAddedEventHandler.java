@@ -1,17 +1,12 @@
-package ru.yandex.practicum.telemetry.collector.service.handler.hub;
+package ru.yandex.practicum.telemetry.collector.service.handler.protobuf.hub;
 
-import org.springframework.stereotype.Component;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
-import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
-import ru.yandex.practicum.grpc.telemetry.event.ScenarioAddedEventProto;
-import ru.yandex.practicum.grpc.telemetry.event.ScenarioConditionProto;
-import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
+import ru.yandex.practicum.grpc.telemetry.event.*;
+import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducerProto;
 
 import java.util.List;
 
-@Component
 public class ScenarioAddedEventHandler extends BaseHubEventHandler<ScenarioAddedEventProto> {
-    public ScenarioAddedEventHandler(KafkaEventProducer producer) {
+    public ScenarioAddedEventHandler(KafkaEventProducerProto producer) {
         super(producer);
     }
 
@@ -47,8 +42,8 @@ public class ScenarioAddedEventHandler extends BaseHubEventHandler<ScenarioAdded
     private ScenarioConditionProto convertCondition(ScenarioConditionProto condition) {
         ScenarioConditionProto.Builder builder = ScenarioConditionProto.newBuilder()
                 .setSensorId(condition.getSensorId())
-                .setType(condition.getType())
-                .setOperation(condition.getOperation());
+                .setType(ConditionTypeProto.valueOf(condition.getType().name()))
+                .setOperation(ConditionOperationProto.valueOf(condition.getOperation().name()));
         switch (condition.getValueCase()) {
             case BOOL_VALUE -> builder.setBoolValue(condition.getBoolValue());
             case INT_VALUE -> builder.setIntValue(condition.getIntValue());
@@ -62,7 +57,7 @@ public class ScenarioAddedEventHandler extends BaseHubEventHandler<ScenarioAdded
     private DeviceActionProto convertAction(DeviceActionProto action) {
         DeviceActionProto.Builder builder = DeviceActionProto.newBuilder()
                 .setSensorId(action.getSensorId())
-                .setType(action.getType());
+                .setType(ActionTypeProto.valueOf(action.getType().name()));
 
         if (action.hasValue()) {
             builder.setValue(action.getValue());

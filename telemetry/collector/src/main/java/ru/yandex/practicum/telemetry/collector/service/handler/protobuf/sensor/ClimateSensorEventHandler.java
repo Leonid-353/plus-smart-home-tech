@@ -1,13 +1,11 @@
-package ru.yandex.practicum.telemetry.collector.service.handler.sensor;
+package ru.yandex.practicum.telemetry.collector.service.handler.protobuf.sensor;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.ClimateSensorProto;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
+import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducerProto;
 
-@Component
 public class ClimateSensorEventHandler extends BaseSensorEventHandler<ClimateSensorProto> {
-    public ClimateSensorEventHandler(KafkaEventProducer producer) {
+    public ClimateSensorEventHandler(KafkaEventProducerProto producer) {
         super(producer);
     }
 

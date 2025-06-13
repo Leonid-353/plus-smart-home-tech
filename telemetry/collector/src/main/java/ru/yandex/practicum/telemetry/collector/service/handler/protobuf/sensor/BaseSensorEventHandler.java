@@ -1,17 +1,17 @@
-package ru.yandex.practicum.telemetry.collector.service.handler.sensor;
+package ru.yandex.practicum.telemetry.collector.service.handler.protobuf.sensor;
 
 import com.google.protobuf.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.telemetry.collector.configuration.KafkaConfig;
-import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
+import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducerProto;
 import ru.yandex.practicum.telemetry.collector.service.handler.SensorEventHandler;
 
 @Slf4j
 @RequiredArgsConstructor
 public abstract class BaseSensorEventHandler<T extends Message> implements SensorEventHandler {
-    protected final KafkaEventProducer producer;
+    protected final KafkaEventProducerProto producer;
 
     protected abstract T mapToProto(SensorEventProto event);
 

@@ -1,13 +1,11 @@
-package ru.yandex.practicum.telemetry.collector.service.handler.hub;
+package ru.yandex.practicum.telemetry.collector.service.handler.protobuf.hub;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceRemovedEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
-import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
+import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducerProto;
 
-@Component
 public class DeviceRemovedEventHandler extends BaseHubEventHandler<DeviceRemovedEventProto> {
-    public DeviceRemovedEventHandler(KafkaEventProducer producer) {
+    public DeviceRemovedEventHandler(KafkaEventProducerProto producer) {
         super(producer);
     }
 

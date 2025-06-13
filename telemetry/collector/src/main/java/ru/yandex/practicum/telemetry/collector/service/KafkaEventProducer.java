@@ -15,7 +15,7 @@ import java.time.Duration;
 @Component
 @RequiredArgsConstructor
 public class KafkaEventProducer {
-    private final KafkaProducer<String, byte[]> producer;
+    private final KafkaProducer<String, Message> producer;
     private final KafkaConfig kafkaConfig;
 
     @Autowired
@@ -29,7 +29,8 @@ public class KafkaEventProducer {
         if (topicName == null || topicName.isEmpty()) {
             throw new RuntimeException("Нет такого топика: " + topicType);
         }
-        producer.send(new ProducerRecord<>(topicName, key, message.toByteArray()));
+        log.info(message.toString());
+        producer.send(new ProducerRecord<>(topicName, key, message));
         producer.flush();
     }
 

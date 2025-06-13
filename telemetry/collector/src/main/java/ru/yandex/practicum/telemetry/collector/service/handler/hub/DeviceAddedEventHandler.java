@@ -23,7 +23,7 @@ public class DeviceAddedEventHandler extends BaseHubEventHandler<DeviceAddedEven
 
         return DeviceAddedEventProto.newBuilder()
                 .setId(deviceAddedEvent.getId())
-                .setType(DeviceTypeProto.valueOf(deviceAddedEvent.getType().name()))
+                .setType(deviceAddedEvent.getType())
                 .build();
     }
 

@@ -6,20 +6,18 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.telemetry.collector.configuration.KafkaConfig;
 
 import java.time.Duration;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
-public class KafkaEventProducer {
+public class KafkaEventProducerAvro {
     private final KafkaProducer<String, SpecificRecordBase> producer;
     private final KafkaConfig kafkaConfig;
 
     @Autowired
-    public KafkaEventProducer(KafkaConfig kafkaConfig) {
+    public KafkaEventProducerAvro(KafkaConfig kafkaConfig) {
         this.kafkaConfig = kafkaConfig;
         this.producer = new KafkaProducer<>(kafkaConfig.getProducer().getProperties());
     }

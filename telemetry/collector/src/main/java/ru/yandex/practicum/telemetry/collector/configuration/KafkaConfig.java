@@ -5,7 +5,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducer;
+import ru.yandex.practicum.telemetry.collector.service.KafkaEventProducerAvro;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -19,8 +19,8 @@ public class KafkaConfig {
     private ProducerConfig producer;
 
     @Bean
-    public KafkaEventProducer kafkaEventProducer() {
-        return new KafkaEventProducer(this);
+    public KafkaEventProducerAvro kafkaEventProducer() {
+        return new KafkaEventProducerAvro(this);
     }
 
     public enum TopicType {

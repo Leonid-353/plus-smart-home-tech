@@ -91,11 +91,15 @@ public class SensorsSnapshotHandler extends BaseSnapshotEventHandler {
     }
 
     private DeviceActionProto convertToDeviceActionProto(Action action) {
-        return DeviceActionProto.newBuilder()
+        DeviceActionProto.Builder builder = DeviceActionProto.newBuilder()
                 .setSensorId(action.getSensor().getId())
-                .setType(mapActionType(action))
-                .setValue(action.getValue())
-                .build();
+                .setType(mapActionType(action));
+
+        if (action.getValue() != null) {
+            builder.setValue(action.getValue());
+        }
+
+        return builder.build();
     }
 
     private Timestamp createCurrentTimestamp() {

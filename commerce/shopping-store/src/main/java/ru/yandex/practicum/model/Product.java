@@ -7,6 +7,7 @@ import ru.yandex.practicum.dto.store.enums.ProductCategory;
 import ru.yandex.practicum.dto.store.enums.ProductState;
 import ru.yandex.practicum.dto.store.enums.QuantityState;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -45,5 +46,5 @@ public class Product {
     QuantityState quantityState;
 
     @Column(name = "price")
-    Double price;
+    BigDecimal price;
 }

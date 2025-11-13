@@ -1,4 +1,4 @@
-package ru.yandex.practicum.dto.cart;
+package ru.yandex.practicum.dto.warehouse;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -12,10 +12,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ShoppingCartDto {
-
+public class AssemblyProductsForOrderRequest {
     @NotNull
-    UUID shoppingCartId;
+    UUID orderId;
 
     @NotNull
     Map<UUID, Long> products;

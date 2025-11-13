@@ -52,4 +52,25 @@ public class ErrorHandler {
         log.error("Product is already in warehouse {}", e.getMessage(), e);
         return new ErrorResponse("Указанный товар уже находится на складе", e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNoDeliveryFound(NoDeliveryFoundException e) {
+        log.error("Delivery not found {}", e.getMessage(), e);
+        return new ErrorResponse("Доставка не найдена", e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNoOrderFound(NoOrderFoundException e) {
+        log.error("Order not found {}", e.getMessage(), e);
+        return new ErrorResponse("Заказ не найден", e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNotEnoughInfoInOrderToCalculate(NotEnoughInfoInOrderToCalculateException e) {
+        log.error("Not enough info in order to calculate {}", e.getMessage(), e);
+        return new ErrorResponse("Недостаточно информации в заказе для расчёта", e.getMessage());
+    }
 }

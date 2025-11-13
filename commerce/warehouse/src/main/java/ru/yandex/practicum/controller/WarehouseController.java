@@ -7,12 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.dto.cart.ShoppingCartDto;
-import ru.yandex.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.yandex.practicum.dto.warehouse.AddressDto;
-import ru.yandex.practicum.dto.warehouse.BookedProductsDto;
-import ru.yandex.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.yandex.practicum.dto.warehouse.*;
 import ru.yandex.practicum.feign.WarehouseFeignClient;
 import ru.yandex.practicum.service.WarehouseService;
+
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -22,6 +22,7 @@ import ru.yandex.practicum.service.WarehouseService;
 public class WarehouseController implements WarehouseFeignClient {
     final WarehouseService warehouseService;
 
+    // 21
     @Override
     public void createNewProductToWarehouse(NewProductInWarehouseRequest request) {
         log.info("Получен запрос на добавление нового товара на склад");
@@ -43,5 +44,24 @@ public class WarehouseController implements WarehouseFeignClient {
     @Override
     public AddressDto getAddressWarehouse() {
         return warehouseService.getAddressWarehouse();
+    }
+
+    // 22
+    @Override
+    public void shippedToDelivery(ShippedToDeliveryRequest request) {
+        log.info("Получен запрос на передачу товаров в доставку");
+        warehouseService.shippedToDelivery(request);
+    }
+
+    @Override
+    public void acceptReturnToWarehouse(Map<UUID, Long> returnedProducts) {
+        log.info("Получен запрос на возврат товаров на склад");
+        warehouseService.acceptReturnToWarehouse(returnedProducts);
+    }
+
+    @Override
+    public BookedProductsDto assemblyProductsForOrder(AssemblyProductsForOrderRequest request) {
+        log.info("Получен запрос на сборку товаров к заказу: {} для подготовки к отправке", request.getOrderId());
+        return warehouseService.assemblyProductsForOrder(request);
     }
 }

@@ -1,5 +1,6 @@
 package ru.yandex.practicum.service;
 
+import jakarta.ws.rs.NotFoundException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -7,17 +8,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.dto.cart.ShoppingCartDto;
-import ru.yandex.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.yandex.practicum.dto.warehouse.AddressDto;
-import ru.yandex.practicum.dto.warehouse.BookedProductsDto;
-import ru.yandex.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.yandex.practicum.dto.warehouse.*;
 import ru.yandex.practicum.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exception.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.exception.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
 import ru.yandex.practicum.model.Address;
 import ru.yandex.practicum.model.Dimension;
+import ru.yandex.practicum.model.OrderBooking;
 import ru.yandex.practicum.model.WarehouseProduct;
+import ru.yandex.practicum.repository.OrderBookingRepository;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
 import java.util.List;
@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class WarehouseServiceImpl implements WarehouseService {
     final WarehouseRepository warehouseRepository;
+    final OrderBookingRepository orderBookingRepository;
     final WarehouseMapper warehouseMapper;
 
     @Override
@@ -102,6 +103,90 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public void shippedToDelivery(ShippedToDeliveryRequest request) {
+        OrderBooking orderBooking = orderBookingRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Бронирование с ID: %s не найдено", request.getOrderId())));
+
+        orderBooking.setDeliveryId(request.getDeliveryId());
+        orderBookingRepository.save(orderBooking);
+    }
+
+    @Override
+    @Transactional
+    public void acceptReturnToWarehouse(Map<UUID, Long> returnedProducts) {
+        if (returnedProducts == null || returnedProducts.isEmpty()) {
+            throw new IllegalArgumentException("Список возвращаемых товаров не может быть пустым");
+        }
+
+        returnedProducts.forEach((productId, quantity) -> {
+            if (quantity == null || quantity <= 0) {
+                throw new IllegalArgumentException(
+                        String.format("Количество товара должно быть положительным числом: %s", productId));
+            }
+        });
+
+        Set<UUID> productIds = returnedProducts.keySet();
+        List<WarehouseProduct> warehouseProducts = warehouseRepository.findAllById(productIds);
+        Map<UUID, WarehouseProduct> productMap = warehouseProducts.stream()
+                .collect(Collectors.toMap(WarehouseProduct::getProductId, Function.identity()));
+
+        Set<UUID> foundIds = productMap.keySet();
+        Set<UUID> missingIds = productIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .collect(Collectors.toSet());
+
+        if (!missingIds.isEmpty()) {
+            throw new NotFoundException("Товары не найдены на складе: " + missingIds);
+        }
+
+        for (Map.Entry<UUID, Long> entry : returnedProducts.entrySet()) {
+            WarehouseProduct product = productMap.get(entry.getKey());
+            product.setQuantity(product.getQuantity() + entry.getValue());
+        }
+
+        warehouseRepository.saveAll(productMap.values());
+    }
+
+    @Override
+    @Transactional
+    public BookedProductsDto assemblyProductsForOrder(AssemblyProductsForOrderRequest request) {
+        if (request.getProducts().isEmpty()) {
+            throw new IllegalArgumentException("Список товаров не может быть пустым");
+        }
+
+        request.getProducts().forEach((productId, quantity) -> {
+            if (quantity == null || quantity <= 0) {
+                throw new IllegalArgumentException(
+                        String.format("Количество товара должно быть положительным: %s", productId));
+            }
+        });
+
+        if (orderBookingRepository.existsById(request.getOrderId())) {
+            throw new IllegalArgumentException(
+                    String.format("Бронирование для заказа %s уже существует", request.getOrderId()));
+        }
+
+        ShoppingCartDto shoppingCart = ShoppingCartDto.builder()
+                .shoppingCartId(request.getOrderId())
+                .products(request.getProducts())
+                .build();
+
+        BookedProductsDto bookedProductsDto = checkProductQuantity(shoppingCart);
+
+        OrderBooking orderBooking = OrderBooking.builder()
+                .orderId(request.getOrderId())
+                .products(request.getProducts())
+                .build();
+
+        orderBookingRepository.save(orderBooking);
+
+        return bookedProductsDto;
+    }
+
+    // Calculate delivery product params
     private DeliveryParams calculateDeliveryParams(Map<UUID, Long> cartProducts,
                                                    Map<UUID, WarehouseProduct> productMap) {
 
@@ -122,7 +207,7 @@ public class WarehouseServiceImpl implements WarehouseService {
                 );
             }
 
-            if (warehouseProduct.getFragile()) {
+            if (Boolean.TRUE.equals(warehouseProduct.getFragile())) {
                 hasProductFragile = true;
             }
 
@@ -140,7 +225,6 @@ public class WarehouseServiceImpl implements WarehouseService {
         return dimension.getWidth() * dimension.getHeight() * dimension.getDepth();
     }
 
-    // Calculate delivery product params
     private record DeliveryParams(
             double totalDeliveryWeight,
             double totalDeliveryVolume,
